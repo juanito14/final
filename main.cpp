@@ -40,15 +40,26 @@ static int request_handler(struct mg_connection *conn) {
 	}
 
 	if (std::ifstream(fname.c_str())){
-		mg_send_status(conn, 200);
-		mg_send_header(conn, "Content-Type", "text/html");
 		std::ifstream t(fname.c_str());
 		std::string data((std::istreambuf_iterator<char>(t)), std::istreambuf_iterator<char>());
-		mg_printf_data(conn, "%s", data.c_str());
+		//mg_send_status(conn, 200);
+		//conn->status_code = 200;
+		//mg_send_header(conn, "Content-Type", "text/html");
+		//mg_printf_data(conn, "%s", data.c_str());
+		mg_printf(conn, "HTTP/1.0 200 OK\r\n"
+						"Content-Length: %d\r\n"
+						"Content-Type: text/html\r\n\r\n%s",
+						(int) data.size(), data.c_str());
 	}else{
-		mg_send_status(conn, 404);
-		mg_send_header(conn, "Content-Type", "text/html");
-		mg_printf_data(conn, "HTTP/1.0 404 Not Found\r\nThis is a reply from server instance # %s\r\n", (char *) conn->server_param);
+//		mg_send_status(conn, 404);
+//		conn->status_code = 404;
+//		mg_send_header(conn, "Content-Type", "text/html");
+//		mg_printf_data(conn, "This is a reply from server instance # %s\r\n", (char *) conn->server_param);
+		//mg_printf(conn, "HTTP/1.0 404 Not Found\r\n");
+		mg_printf(conn, "HTTP/1.0 404 Not Found\r\n"
+						"Content-Length: %d\r\n"
+						"Content-Type: text/html\r\n\r\n%s",
+						9, "Not Found");
 	}
 
 	return 0;
