@@ -21,11 +21,7 @@ using namespace std;
 string port;
 string host;
 string dir;
-
-
-void process(){
-	syslog (LOG_NOTICE, "Writing to my Syslog");
-}
+struct mg_server *server1, *server2;
 
 static int request_handler(struct mg_connection *conn) {
 
@@ -93,67 +89,60 @@ int main(int argc, char *argv[])
 
 	//	printf("name argument = %s\n", argv[optind]);
 
-	//Set our Logging Mask and open the Log
-	setlogmask(LOG_UPTO(LOG_NOTICE));
-	openlog(DAEMON_NAME, LOG_CONS | LOG_NDELAY | LOG_PERROR | LOG_PID, LOG_USER);
+	// создаем потомка
+		int pid = fork();
 
-	syslog(LOG_INFO, "Entering Daemon");
+		if (pid == -1) // если не удалось запустить потомка
+		{
+			// выведем на экран ошибку и её описание
+			printf("Error: Start Daemon failed (%s)\n", strerror(errno));
 
-	pid_t pid, sid;
+			return -1;
+		}
+		else if (!pid) // если это потомок
+		{
+			// данный код уже выполняется в процессе потомка
+			// разрешаем выставлять все биты прав на создаваемые файлы,
+			// иначе у нас могут быть проблемы с правами доступа
+			umask(0);
 
-	//Fork the Parent Process
-	pid = fork();
+			// создаём новый сеанс, чтобы не зависеть от родителя
+			setsid();
 
-	if (pid < 0) { exit(EXIT_FAILURE); }
+			// переходим в корень диска, если мы этого не сделаем, то могут быть проблемы.
+			// к примеру с размантированием дисков
+//			chdir("/");
 
-	//We got a good pid, Close the Parent Process
-	if (pid > 0) { exit(EXIT_SUCCESS); }
+			// закрываем дискрипторы ввода/вывода/ошибок, так как нам они больше не понадобятся
+//			close(STDIN_FILENO);
+//			close(STDOUT_FILENO);
+//			close(STDERR_FILENO);
 
-	//Change File Mask
-	umask(0);
 
-	//Create a new Signature Id for our child
-	sid = setsid();
-	if (sid < 0) { exit(EXIT_FAILURE); }
+			server1 = mg_create_server((void *) "1");
+			server2 = mg_create_server((void *) "2");
 
-	//Change Directory
-	//If we cant find the directory we exit with failure.
-	if ((chdir("/")) < 0) { exit(EXIT_FAILURE); }
+			mg_add_uri_handler(server1, "/", request_handler);
+			mg_add_uri_handler(server2, "/", request_handler);
 
-	//Close Standard File Descriptors
-	close(STDIN_FILENO);
-	close(STDOUT_FILENO);
-	close(STDERR_FILENO);
+			// Make both server1 and server2 listen on the same socket
+			mg_set_option(server1, "listening_port", port.c_str());
+			mg_set_option(server1, "document_root", dir.c_str());
+			mg_set_listening_socket(server2, mg_get_listening_socket(server1));
+			// server1 goes to separate thread, server 2 runs in main thread.
+			// IMPORTANT: NEVER LET DIFFERENT THREADS HANDLE THE SAME SERVER.
+			mg_start_thread(serve, server1);
+			mg_start_thread(serve, server2);
+			getchar();
 
-	//----------------
-	//Main Process
-	//----------------
-	{
-		//process();    //Run our Process
-		struct mg_server *server1, *server2;
+			return 0;
+		}
+		else // если это родитель
+		{
+			// завершим процес, т.к. основную свою задачу (запуск демона) мы выполнили
+			return 0;
+		}
 
-		server1 = mg_create_server((void *) "1");
-		server2 = mg_create_server((void *) "2");
-
-		mg_add_uri_handler(server1, "/", request_handler);
-		mg_add_uri_handler(server2, "/", request_handler);
-
-		// Make both server1 and server2 listen on the same socket
-		mg_set_option(server1, "listening_port", port.c_str());
-		mg_set_option(server1, "document_root", dir.c_str());
-		mg_set_listening_socket(server2, mg_get_listening_socket(server1));
-
-		// server1 goes to separate thread, server 2 runs in main thread.
-		// IMPORTANT: NEVER LET DIFFERENT THREADS HANDLE THE SAME SERVER.
-		mg_start_thread(serve, server1);
-		mg_start_thread(serve, server2);
-
-		//sleep(60);    //Sleep for 60 seconds
-		getchar();
-	}
-
-	//Close the log
-	closelog ();
 
 	return 0;
 }
