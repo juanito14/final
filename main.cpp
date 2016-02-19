@@ -50,6 +50,7 @@ static int request_handler(struct mg_connection *conn) {
 						"Content-Length: %d\r\n"
 						"Content-Type: text/html\r\n\r\n%s",
 						(int) data.size(), data.c_str());
+
 	}else{
 //		mg_send_status(conn, 404);
 //		conn->status_code = 404;
@@ -140,7 +141,8 @@ int main(int argc, char *argv[])
 			mg_add_uri_handler(server2, "/", request_handler);
 
 			// Make both server1 and server2 listen on the same socket
-			mg_set_option(server1, "listening_port", port.c_str());
+			string ip = host + ":" + port;
+			mg_set_option(server1, "listening_port", ip.c_str());
 			mg_set_option(server1, "document_root", dir.c_str());
 			mg_set_listening_socket(server2, mg_get_listening_socket(server1));
 			// server1 goes to separate thread, server 2 runs in main thread.
