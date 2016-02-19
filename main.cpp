@@ -12,6 +12,7 @@
 #include <sstream>
 #include <vector>
 #include <fstream>
+#include <streambuf>
 #include "mongoose.h"
 
 using namespace std;
@@ -41,7 +42,9 @@ static int request_handler(struct mg_connection *conn) {
 	if (std::ifstream(fname.c_str())){
 		mg_send_status(conn, 200);
 		mg_send_header(conn, "Content-Type", "text/html");
-		mg_printf_data(conn, "HTTP/1.0 200 OK\r\nThis is a reply from server instance # %s\r\n", (char *) conn->server_param);
+		std::ifstream t(fname.c_str());
+		std::string data((std::istreambuf_iterator<char>(t)), std::istreambuf_iterator<char>());
+		mg_printf_data(conn, "%s", data.c_str());
 	}else{
 		mg_send_status(conn, 404);
 		mg_send_header(conn, "Content-Type", "text/html");
