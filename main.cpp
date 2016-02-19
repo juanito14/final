@@ -46,10 +46,19 @@ static int request_handler(struct mg_connection *conn) {
 		//conn->status_code = 200;
 		//mg_send_header(conn, "Content-Type", "text/html");
 		//mg_printf_data(conn, "%s", data.c_str());
+		string uri = "http://" + host + ":" + port;
+		uri += conn->uri;
 		mg_printf(conn, "HTTP/1.0 200 OK\r\n"
-						"Content-Length: %d\r\n"
-						"Content-Type: text/html\r\n\r\n%s",
-						(int) data.size(), data.c_str());
+				  "Date: Fri, 19 Feb 2016 19:09:00 GMT\r\n"
+				  "Pragma: no-cache\r\n"
+				  "Location: %s\r\n"
+				  "Server: CERN/3.0\r\n"
+				  "Allow: GET, HEAD\r\n"
+				  "Expires: Thu, 25 Feb 2016 16:00:00 GMT\r\n"
+				  "Last-Modified: Thu, 18 Feb 2016 16:00:00 GMT\r\n"
+					"Content-Length: %d\r\n"
+					"Content-Type: text/html\r\n\r\n%s",
+					uri.c_str(),(int) data.size(), data.c_str());
 
 	}else{
 //		mg_send_status(conn, 404);
