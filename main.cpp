@@ -145,7 +145,7 @@ int main(int argc, char *argv[])
 //	if(host == "0.0.0.0"){
 //		host = "127.0.0.1";
 //	}
-	host = "127.0.0.1";
+	host = "172.17.1.203";
 
 	//ofstream of("/home/osboxes/params.txt", std::ofstream::out);
 	ofstream of("/home/box/params.txt", std::ofstream::out);
