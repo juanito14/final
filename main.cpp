@@ -12,12 +12,13 @@
 #include <sstream>
 #include <vector>
 #include <fstream>
+#include <ctime>
+#include <iomanip>
+#include <iostream>
 #include <streambuf>
 #include "mongoose.h"
 
 using namespace std;
-
-#define DAEMON_NAME "shamandaemon"
 
 string port;
 string host;
@@ -27,6 +28,12 @@ struct mg_server *server1, *server2;
 static int request_handler(struct mg_connection *conn) {
 
 	string s = conn->uri;
+	string query = conn->query_string;
+	ofstream of("/home/box/log.txt", std::ofstream::out);
+	of << query << endl << endl;
+	of << s << endl;
+	of.close();
+
 	string fname;
 	if(s == "/"){
 		fname = dir + "/index.html";
@@ -46,19 +53,33 @@ static int request_handler(struct mg_connection *conn) {
 		//conn->status_code = 200;
 		//mg_send_header(conn, "Content-Type", "text/html");
 		//mg_printf_data(conn, "%s", data.c_str());
+
+		std::time_t _time = std::time(NULL);
+		string date, dayofWeek, day, month, year, time, zone;
+		stringstream ss;
+		ss << std::put_time(std::gmtime(&_time), "%a, %d %b %Y %H:%M:%S %Z");
+		ss >> dayofWeek;
+		ss >> day;
+		ss >> month;
+		ss >> year;
+		ss >> time;
+		ss >> zone;
+		date = dayofWeek + " " + day + " " + month + " " + year + " " + time + " " + zone;
+		cout << date << endl;
+
 		string uri = "http://" + host + ":" + port;
 		uri += conn->uri;
 		mg_printf(conn, "HTTP/1.0 200 OK\r\n"
-				  "Date: Fri, 19 Feb 2016 19:09:00 GMT\r\n"
+				  "Date: %s\r\n"
 				  "Pragma: no-cache\r\n"
 				  "Location: %s\r\n"
 				  "Server: CERN/3.0\r\n"
 				  "Allow: GET, HEAD\r\n"
-				  "Expires: Thu, 25 Feb 2016 16:00:00 GMT\r\n"
-				  "Last-Modified: Thu, 18 Feb 2016 16:00:00 GMT\r\n"
+				  "Expires: %s\r\n"
+				  "Last-Modified: %s\r\n"
 					"Content-Length: %d\r\n"
 					"Content-Type: text/html\r\n\r\n%s",
-					uri.c_str(),(int) data.size(), data.c_str());
+					date.c_str(), uri.c_str(), date.c_str(), date.c_str(), (int) data.size(), data.c_str());
 
 	}else{
 //		mg_send_status(conn, 404);
@@ -132,16 +153,6 @@ int main(int argc, char *argv[])
 
 			// создаём новый сеанс, чтобы не зависеть от родителя
 			setsid();
-
-			// переходим в корень диска, если мы этого не сделаем, то могут быть проблемы.
-			// к примеру с размантированием дисков
-//			chdir("/");
-
-			// закрываем дискрипторы ввода/вывода/ошибок, так как нам они больше не понадобятся
-//			close(STDIN_FILENO);
-//			close(STDOUT_FILENO);
-//			close(STDERR_FILENO);
-
 
 			server1 = mg_create_server((void *) "1");
 			server2 = mg_create_server((void *) "2");
