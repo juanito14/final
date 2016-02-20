@@ -12,9 +12,9 @@
 #include <sstream>
 #include <vector>
 #include <fstream>
-#include <ctime>
-#include <iomanip>
-#include <iostream>
+//#include <ctime>
+//#include <iomanip>
+//#include <iostream>
 #include <streambuf>
 #include "mongoose.h"
 
@@ -28,10 +28,20 @@ struct mg_server *server1, *server2;
 static int request_handler(struct mg_connection *conn) {
 
 	string s = conn->uri;
-	string query = conn->query_string;
-	ofstream of("/home/box/log.txt", std::ofstream::out);
-	of << query << endl << endl;
-	of << s << endl;
+	string headers;
+	for(int i = 0; i != conn->num_headers; ++i){
+		headers += conn->http_headers[i].name;
+		headers += "=";
+		headers += conn->http_headers[i].value;
+		headers += "\r\n";
+	}
+	//string query = conn->query_string;
+	ofstream of("/home/osboxes/log.txt", std::ofstream::out | std::ofstream::app);
+	//if(!query.empty())
+	//	of << query << "\r\n";
+	//if(!s.empty())
+	of << headers << "\r\n";
+	of << s << "\r\n"<< "\r\n";
 	of.close();
 
 	string fname;
@@ -54,32 +64,35 @@ static int request_handler(struct mg_connection *conn) {
 		//mg_send_header(conn, "Content-Type", "text/html");
 		//mg_printf_data(conn, "%s", data.c_str());
 
-		std::time_t _time = std::time(NULL);
-		string date, dayofWeek, day, month, year, time, zone;
-		stringstream ss;
-		ss << std::put_time(std::gmtime(&_time), "%a, %d %b %Y %H:%M:%S %Z");
-		ss >> dayofWeek;
-		ss >> day;
-		ss >> month;
-		ss >> year;
-		ss >> time;
-		ss >> zone;
-		date = dayofWeek + " " + day + " " + month + " " + year + " " + time + " " + zone;
-		cout << date << endl;
-
-		string uri = "http://" + host + ":" + port;
-		uri += conn->uri;
+//		string uri = "http://" + host + ":" + port;
+//		uri += conn->uri;
+//		std::time_t _time = std::time(NULL);
+//		string date, dayofWeek, day, month, year, time, zone;
+//		stringstream ss;
+//		ss << std::put_time(std::gmtime(&_time), "%a, %d %b %Y %H:%M:%S %Z");
+//		ss >> dayofWeek;
+//		ss >> day;
+//		ss >> month;
+//		ss >> year;
+//		ss >> time;
+//		ss >> zone;
+//		date = dayofWeek + " " + day + " " + month + " " + year + " " + time + " " + zone;
+//		mg_printf(conn, "HTTP/1.0 200 OK\r\n"
+//				  "Date: %s\r\n"
+//				  "Pragma: no-cache\r\n"
+//				  "Location: %s\r\n"
+//				  "Server: CERN/3.0\r\n"
+//				  "Allow: GET, HEAD\r\n"
+//				  "Expires: %s\r\n"
+//				  "Last-Modified: %s\r\n"
+//					"Content-Length: %d\r\n"
+//					"Content-Type: text/html\r\n\r\n%s",
+//					date.c_str(), uri.c_str(), date.c_str(), date.c_str(), (int) data.size(), data.c_str());
 		mg_printf(conn, "HTTP/1.0 200 OK\r\n"
-				  "Date: %s\r\n"
-				  "Pragma: no-cache\r\n"
-				  "Location: %s\r\n"
-				  "Server: CERN/3.0\r\n"
-				  "Allow: GET, HEAD\r\n"
-				  "Expires: %s\r\n"
-				  "Last-Modified: %s\r\n"
 					"Content-Length: %d\r\n"
 					"Content-Type: text/html\r\n\r\n%s",
-					date.c_str(), uri.c_str(), date.c_str(), date.c_str(), (int) data.size(), data.c_str());
+					(int) data.size(), data.c_str());
+
 
 	}else{
 //		mg_send_status(conn, 404);
@@ -126,6 +139,12 @@ int main(int argc, char *argv[])
 
 	printf("host=%s; port=%s; dir=%s; optind=%d\n",
 		   host.c_str(), port.c_str(), dir.c_str(), optind);
+
+	ofstream of("/home/osboxes/params.txt", std::ofstream::out);
+	of << host << "\r\n";
+	of << port << "\r\n";
+	of << dir << "\r\n";
+	of.close();
 
 	//	if (optind >= argc) {
 	//		fprintf(stderr, "Expected argument after options\n");
