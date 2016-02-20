@@ -147,6 +147,9 @@ int main(int argc, char *argv[])
 	of << port << "\r\n";
 	of << dir << "\r\n";
 	of.close();
+	if(host == "0.0.0.0"){
+		host = "127.0.0.1";
+	}
 
 	//	if (optind >= argc) {
 	//		fprintf(stderr, "Expected argument after options\n");
