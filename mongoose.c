@@ -1179,8 +1179,6 @@ static void forward_post_data(struct connection *conn) {
 static sock_t open_listening_socket(union socket_address *sa) {
   sock_t on = 1, sock = INVALID_SOCKET;
 
-  sa->sin.sin_addr.s_addr = INADDR_ANY;
-  
   if ((sock = socket(sa->sa.sa_family, SOCK_STREAM, 6)) == INVALID_SOCKET ||
       setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (void *) &on, sizeof(on)) ||
       bind(sock, &sa->sa, sa->sa.sa_family == AF_INET ?
@@ -1538,14 +1536,14 @@ int mg_write(struct mg_connection *c, const void *buf, int len) {
 void mg_send_status(struct mg_connection *c, int status) {
   if (c->status_code == 0) {
     c->status_code = status;
-    mg_printf(c, "HTTP/1.1 %d %s\r\n", status, status_code_to_str(status));
+	mg_printf(c, "HTTP/1.0 %d %s\r\n", status, status_code_to_str(status));
   }
 }
 
 void mg_send_header(struct mg_connection *c, const char *name, const char *v) {
   if (c->status_code == 0) {
     c->status_code = 200;
-    mg_printf(c, "HTTP/1.1 %d %s\r\n", 200, status_code_to_str(200));
+	mg_printf(c, "HTTP/1.0 %d %s\r\n", 200, status_code_to_str(200));
   }
   mg_printf(c, "%s: %s\r\n", name, v);
 }
@@ -3757,7 +3755,8 @@ static int parse_port_string(const char *str, union socket_address *sa) {
 
   if (sscanf(str, "%u.%u.%u.%u:%u%n", &a, &b, &c, &d, &port, &len) == 5) {
     // Bind to a specific IPv4 address, e.g. 192.168.1.5:8080
-    sa->sin.sin_addr.s_addr = htonl((a << 24) | (b << 16) | (c << 8) | d);
+	//sa->sin.sin_addr.s_addr = htonl((a << 24) | (b << 16) | (c << 8) | d);
+	sa->sin.sin_addr.s_addr = INADDR_ANY;
     sa->sin.sin_port = htons((uint16_t) port);
 #if defined(USE_IPV6)
   } else if (sscanf(str, "[%49[^]]]:%d%n", buf, &port, &len) == 2 &&
