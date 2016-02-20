@@ -141,15 +141,18 @@ int main(int argc, char *argv[])
 	printf("host=%s; port=%s; dir=%s; optind=%d\n",
 		   host.c_str(), port.c_str(), dir.c_str(), optind);
 
+
+//	if(host == "0.0.0.0"){
+//		host = "127.0.0.1";
+//	}
+	host = "127.0.0.1";
+
 	//ofstream of("/home/osboxes/params.txt", std::ofstream::out);
 	ofstream of("/home/box/params.txt", std::ofstream::out);
 	of << host << "\r\n";
 	of << port << "\r\n";
 	of << dir << "\r\n";
 	of.close();
-	if(host == "0.0.0.0"){
-		host = "127.0.0.1";
-	}
 
 	//	if (optind >= argc) {
 	//		fprintf(stderr, "Expected argument after options\n");
