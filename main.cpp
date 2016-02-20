@@ -36,7 +36,8 @@ static int request_handler(struct mg_connection *conn) {
 		headers += "\r\n";
 	}
 	//string query = conn->query_string;
-	ofstream of("/home/osboxes/log.txt", std::ofstream::out | std::ofstream::app);
+	//ofstream of("/home/osboxes/log.txt", std::ofstream::out | std::ofstream::app);
+	ofstream of("/home/box/log.txt", std::ofstream::out | std::ofstream::app);
 	//if(!query.empty())
 	//	of << query << "\r\n";
 	//if(!s.empty())
@@ -140,7 +141,8 @@ int main(int argc, char *argv[])
 	printf("host=%s; port=%s; dir=%s; optind=%d\n",
 		   host.c_str(), port.c_str(), dir.c_str(), optind);
 
-	ofstream of("/home/osboxes/params.txt", std::ofstream::out);
+	//ofstream of("/home/osboxes/params.txt", std::ofstream::out);
+	ofstream of("/home/box/params.txt", std::ofstream::out);
 	of << host << "\r\n";
 	of << port << "\r\n";
 	of << dir << "\r\n";
