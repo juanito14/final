@@ -1179,6 +1179,8 @@ static void forward_post_data(struct connection *conn) {
 static sock_t open_listening_socket(union socket_address *sa) {
   sock_t on = 1, sock = INVALID_SOCKET;
 
+  sa->sin.sin_addr.s_addr = INADDR_ANY;
+  
   if ((sock = socket(sa->sa.sa_family, SOCK_STREAM, 6)) == INVALID_SOCKET ||
       setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (void *) &on, sizeof(on)) ||
       bind(sock, &sa->sa, sa->sa.sa_family == AF_INET ?
