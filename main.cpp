@@ -149,7 +149,34 @@ int main(int argc, char *argv[])
 	of << dir << "\r\n";
 	of.close();
 
-	server1 = mg_create_server((void *) "1");
+	//	if (optind >= argc) {
+	//		fprintf(stderr, "Expected argument after options\n");
+	//		exit(EXIT_FAILURE);
+	//	}
+
+	//	printf("name argument = %s\n", argv[optind]);
+
+	// создаем потомка
+		int pid = fork();
+
+		if (pid == -1) // если не удалось запустить потомка
+		{
+			// выведем на экран ошибку и её описание
+			printf("Error: Start Daemon failed (%s)\n", strerror(errno));
+
+			return -1;
+		}
+		else if (!pid) // если это потомок
+		{
+			// данный код уже выполняется в процессе потомка
+			// разрешаем выставлять все биты прав на создаваемые файлы,
+			// иначе у нас могут быть проблемы с правами доступа
+			umask(0);
+
+			// создаём новый сеанс, чтобы не зависеть от родителя
+			setsid();
+
+			server1 = mg_create_server((void *) "1");
 			server2 = mg_create_server((void *) "2");
 
 			mg_add_uri_handler(server1, "/", request_handler);
@@ -165,6 +192,14 @@ int main(int argc, char *argv[])
 			mg_start_thread(serve, server1);
 			mg_start_thread(serve, server2);
 			getchar();
+
+			return 0;
+		}
+		else // если это родитель
+		{
+			// завершим процес, т.к. основную свою задачу (запуск демона) мы выполнили
+			return 0;
+		}
 
 
 	return 0;
